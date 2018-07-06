@@ -18,12 +18,12 @@ uint8_t volatile sleeps_until_next_beep = 0;
 
 static void setAllGPIOAsInputs() {
   // Configure all 6 GPIO pins as input (as a default and/or to save power)
-  DDRB &= ~(_BV(PORTB0) | _BV(PORTB1) | _BV(PORTB2) | _BV(PORTB3) | _BV(PORTB4) | _BV(PORTB5));
+  DDRB &= ~(_BV(PB0) | _BV(PB1) | _BV(PB2) | _BV(PB3) | _BV(PB4) | _BV(PB5));
 }
 
 static void setupOutputGPIOs() {
   // Configure PB4 as an output (it'll be the PWM OC1B)
-  DDRB = (0x01 << PORTB4);
+  DDRB |= _BV(PB4);
 }
 
 static void initPWM() {
@@ -64,8 +64,7 @@ static void adcDisable() {
 //Sets the watchdog timer to wake us up, but not reset
 //0=16ms, 1=32ms, 2=64ms, 3=125ms, 4=250ms, 5=500ms
 //6=1sec, 7=2sec, 8=4sec, 9=8sec
-static void enableWDTInterrupt(uint8_t timerPrescaler)
-{
+static void enableWDTInterrupt(uint8_t timerPrescaler) {
   uint8_t WDTCSR_ = (timerPrescaler & 0x07);
   WDTCSR_ |= (timerPrescaler > 7) ? _BV(WDP3) : 0x00; // Set WDP3 if prescalar > 7 (ie. 4.0s, 8.0s)
   WDTCSR_ |= _BV(WDIE); // Enable watchdog interrupt
@@ -89,6 +88,7 @@ static void sleepUntilWDTWake() {
   // time you sleep -- it makes a huuuge difference in power consumption.
   set_sleep_mode(SLEEP_MODE_PWR_DOWN); // Configure what kind of sleep to use (very low power mode)
   sleep_enable();                      // Make it possible to go to sleep
+  wdt_reset();                         // Reset the WDT to 0 to get the full delay before the interrupt fires
   sleep_mode();                        // Actually send the system to sleep
   sleep_disable();                     // System continues execution (wakes) here when watchdog times out
 }
