@@ -16,10 +16,17 @@
 
 uint8_t volatile sleeps_until_next_beep = 0;
 
-static void initPWM() {
+static void setAllGPIOAsInputs() {
+  // Configure all 6 GPIO pins as input (as a default and/or to save power)
+  DDRB &= ~(_BV(PORTB0) | _BV(PORTB1) | _BV(PORTB2) | _BV(PORTB3) | _BV(PORTB4) | _BV(PORTB5));
+}
+
+static void setupOutputGPIOs() {
   // Configure PB4 as an output (it'll be the PWM OC1B)
   DDRB = (0x01 << PORTB4);
+}
 
+static void initPWM() {
   // Enable PWM output on timer1 b and configure how it'll work
   GTCCR = (0x01 << PWM1B) | (0x02 << COM1B0);
 
@@ -40,10 +47,12 @@ static void inline SetPWMOutput(uint8_t duty) {
 }
 
 static void beep() {
+  setupOutputGPIOs(); // Turn the buzzer's GPIO into an output
   initPWM();          // Set up the PWM HW for the right period/etc
   SetPWMOutput(128);  // Make the duty cycle 50%
   _delay_ms(BEEP_DURATION_MS);
   disablePWM();        // Turn off the PWM HW
+  setAllGPIOAsInputs(); // Turn all GPIOs back into inputs to save power
 }
 
 static void adcDisable() {
@@ -73,11 +82,11 @@ static void enableWDTInterrupt(uint8_t timerPrescaler)
 }
 
 // Send the whole system into deep sleep until the next WDT interrupt
-// For maximum power savings the ADC definitely should be disabled as well.  However for this
-// project we never need the ADC so it's just disabled once at the beginning of execution and never
-// touched again.  If you're actually using the ADC you'll have to disable and re-endable it each
-// time you sleep -- it makes a huuuge difference in power consumption.
 static void sleepUntilWDTWake() {
+  // For maximum power savings the ADC definitely should be disabled as well.  However for this
+  // project we never need the ADC so it's just disabled once at the beginning of execution and never
+  // touched again.  If you're actually using the ADC you'll have to disable and re-endable it each
+  // time you sleep -- it makes a huuuge difference in power consumption.
   set_sleep_mode(SLEEP_MODE_PWR_DOWN); // Configure what kind of sleep to use (very low power mode)
   sleep_enable();                      // Make it possible to go to sleep
   sleep_mode();                        // Actually send the system to sleep
@@ -90,15 +99,19 @@ static void sleepUntilWDTWake() {
 ISR(WDT_vect) {}
 
 int main (void) {
-  srand(RANDOM_SEED);
-  adcDisable();
+  // TODO: Get a better random seed?  It's silly, but it's a reasonably easy thing to improve
+  srand(RANDOM_SEED);  // To get a seemingly random pause length we need to seed the RNG
+  adcDisable();  // We never use the ADC, so it should be immediately disabled for power savings
   enableWDTInterrupt(9); // Set up the WDT to run as slowly as possible
 
+  // Play a short burst of beeps on startup, so the user knows everything is working
   for (uint8_t i = 0; i < NUM_INITIAL_BEEPS; i++) {
     beep();
     _delay_ms(BEEP_DURATION_MS);  // Put an equal-length pause between beeps
   }
 
+  // Main loop of the program.  It waits for a randomly selected # of low power "sleeps" in
+  // between playing short beeps.
   while (1) {
     if (!sleeps_until_next_beep--) {
       // Determine how long the next delay will be
