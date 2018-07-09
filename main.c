@@ -7,6 +7,10 @@
 
 // PIN CONFIGURATION:
 // BUZZER - B4  (OC1B)
+//    NOTE: Buzzer needs to be connected to Vcc & B4 (NOT ground) since we are
+//          using the internal pull-ups on GPIOS to reduce power.  If it's on
+//          GND, we'd need a pull-down instead which is an extra component.
+//          Since the buzzer runs on AC, I think it should be just fine.
 
 #define RANDOM_SEED 0x8F
 #define MIN_SLEEPS_BETWEEN_BEEPS 20
@@ -19,6 +23,8 @@ uint8_t volatile sleeps_until_next_beep = 0;
 static void setAllGPIOAsInputs() {
   // Configure all 6 GPIO pins as input (as a default and/or to save power)
   DDRB &= ~(_BV(PB0) | _BV(PB1) | _BV(PB2) | _BV(PB3) | _BV(PB4) | _BV(PB5));
+  // Turn on the internal pullups for each of them as well.
+  PORTB |= _BV(PB0) | _BV(PB1) | _BV(PB2) | _BV(PB3) | _BV(PB4) | _BV(PB5);
 }
 
 static void setupOutputGPIOs() {
