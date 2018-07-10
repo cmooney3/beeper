@@ -11,15 +11,27 @@
 //          using the internal pull-ups on GPIOS to reduce power.  If it's on
 //          GND, we'd need a pull-down instead which is an extra component.
 //          Since the buzzer runs on AC, I think it should be just fine.
+// DELAY JUMPER - B0 --- SWITCH/JUMPER -- 10kOhm --- B3
+//    NOTE: This jumper/switch needs to lie on a trace connecting these two
+//          GPIOS with a current limited resistor in series.  This system, as
+//          opposed to a traditional 1-GPIO switch circuit saves lots and lots
+//          of power.
 
 #define RANDOM_SEED 0x8F
-#define MIN_SLEEPS_BETWEEN_BEEPS 20
-#define MAX_SLEEPS_BETWEEN_BEEPS 60
+#define MIN_INTERBEEP_DELAY_S (60 * 10)
+#define MAX_INTERBEEP_DELAY_S (60 * 60)
 #define NUM_INITIAL_BEEPS_NODELAY 4
 #define NUM_INITIAL_BEEPS_DELAYED 49
+#define INITIAL_TIME_DELAY_S (30 * 24 * 60 * 60) // Approximately 1 month
 #define BEEP_DURATION_MS 20
 
-uint8_t volatile sleeps_until_next_beep = 0;
+#define SLEEP_DURATION_S 8 // This is set by the WDT prescalar in enableWDTInterrupt()
+#define MIN_SLEEPS_BETWEEN_BEEPS (MIN_INTERBEEP_DELAY_S / SLEEP_DURATION_S)
+#define MAX_SLEEPS_BETWEEN_BEEPS (MAX_INTERBEEP_DELAY_S / SLEEP_DURATION_S)
+#define NUM_INITIAL_SLEEPS_FOR_DELAY (INITIAL_TIME_DELAY_S / SLEEP_DURATION_S)
+
+
+uint32_t sleeps_until_next_beep = 0;
 uint8_t is_delay_jumper_connected;
 
 static void setAllGPIOAsInputs() {
@@ -133,14 +145,19 @@ int main (void) {
   // flag "is_delay_jumper_connected" for use in the rest of the program, and is only run once
   // on boot.  The system must be reset to get a new reading.
   checkTimeDelayJumper();
+  if (is_delay_jumper_connected) {
+    // If the delay jumper is connected, we start off requiring a huge number of sleeps before
+    // the first beep is ever played -- thus adding a time-delay feature.
+    sleeps_until_next_beep = NUM_INITIAL_SLEEPS_FOR_DELAY;
+  }
 
   // TODO: Get a better random seed?  It's silly, but it's a reasonably easy thing to improve
   srand(RANDOM_SEED);  // To get a seemingly random pause length we need to seed the RNG
   adcDisable();  // We never use the ADC, so it should be immediately disabled for power savings
-  enableWDTInterrupt(9); // Set up the WDT to run as slowly as possible
+  enableWDTInterrupt(9); // Set up the WDT to run as slowly as possible (approx 8s)
 
   // Play a short burst of beeps on startup, so the user knows everything is working
-  uint8_t num_initial_beeps = is_delay_jumper_connected ? NUM_INITIAL_BEEPS_NODELAY : NUM_INITIAL_BEEPS_DELAYED;
+  uint8_t num_initial_beeps = is_delay_jumper_connected ? NUM_INITIAL_BEEPS_DELAYED : NUM_INITIAL_BEEPS_NODELAY;
   for (uint8_t i = 0; i < num_initial_beeps; i++) {
     beep();
     _delay_ms(BEEP_DURATION_MS);  // Put an equal-length pause between beeps
