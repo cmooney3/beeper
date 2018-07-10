@@ -15,10 +15,12 @@
 #define RANDOM_SEED 0x8F
 #define MIN_SLEEPS_BETWEEN_BEEPS 20
 #define MAX_SLEEPS_BETWEEN_BEEPS 60
-#define NUM_INITIAL_BEEPS 4
+#define NUM_INITIAL_BEEPS_NODELAY 4
+#define NUM_INITIAL_BEEPS_DELAYED 49
 #define BEEP_DURATION_MS 20
 
 uint8_t volatile sleeps_until_next_beep = 0;
+uint8_t is_delay_jumper_connected;
 
 static void setAllGPIOAsInputs() {
   // Configure all 6 GPIO pins as input (as a default and/or to save power)
@@ -104,14 +106,42 @@ static void sleepUntilWDTWake() {
 // execution is restarted and the system is woken up.
 ISR(WDT_vect) {}
 
+void checkTimeDelayJumper() {
+  // This function runs immediately on boot, so it assumes everything is unconfigured.  It works
+  // because PB0 and PB3 are connected to one another with a 10k resistor between them.  Here we
+  // configure one as an input and one as an output and quickly check if the wire is still connecting
+  // them by changing the value on the output and checking it at the input.  If the input value
+  // matches the output one, then we know the jumper has not been cut.
+
+  // Configure PB0 as an output
+  DDRB |= _BV(PB0);
+  // Configure PB3 as an input w/ pull-up (to detect the state)
+  DDRB &= ~_BV(PB3);
+  PORTB |= _BV(PB3);
+
+  // Turn the output pin to 0, if they're connected, PB3 should read a 0
+  PORTB |= _BV(PB0);
+  // Then read in the value on PB3, and see the state of the jumper.  If it reads 0 (like PB0 is set
+  // to) then we know the jumper is still connected.  Otherwise someone cut the jumper
+  is_delay_jumper_connected = !(PINB & _BV(PB3));
+  // Turn PB0 back into an input to save power.
+  DDRB &= ~_BV(PB0);
+}
+
 int main (void) {
+  // Very first thing to do is check if the time-delay jumper is set.  This sets the global
+  // flag "is_delay_jumper_connected" for use in the rest of the program, and is only run once
+  // on boot.  The system must be reset to get a new reading.
+  checkTimeDelayJumper();
+
   // TODO: Get a better random seed?  It's silly, but it's a reasonably easy thing to improve
   srand(RANDOM_SEED);  // To get a seemingly random pause length we need to seed the RNG
   adcDisable();  // We never use the ADC, so it should be immediately disabled for power savings
   enableWDTInterrupt(9); // Set up the WDT to run as slowly as possible
 
   // Play a short burst of beeps on startup, so the user knows everything is working
-  for (uint8_t i = 0; i < NUM_INITIAL_BEEPS; i++) {
+  uint8_t num_initial_beeps = is_delay_jumper_connected ? NUM_INITIAL_BEEPS_NODELAY : NUM_INITIAL_BEEPS_DELAYED;
+  for (uint8_t i = 0; i < num_initial_beeps; i++) {
     beep();
     _delay_ms(BEEP_DURATION_MS);  // Put an equal-length pause between beeps
   }
