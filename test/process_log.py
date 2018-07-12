@@ -35,7 +35,7 @@ with open(filename, 'rb') as f:
       break
 
 print "BEEP DURATIONS"
-print "count:\t%fs" % len(durations)
+print "count:\t%d" % len(durations)
 print "min:\t%fms" % np.min(durations)
 print "max:\t%fms" % np.max(durations)
 print "mean:\t%fms" % np.mean(durations)
@@ -43,7 +43,7 @@ print "stddev:\t%fms" % np.std(durations)
 print
 
 print "INTERBEEP PAUSES"
-print "count:\t%fs" % len(interbeep_delays)
+print "count:\t%d" % len(interbeep_delays)
 print "min:\t%fs" % np.min(interbeep_delays)
 print "max:\t%fs" % np.max(interbeep_delays)
 print "mean:\t%fs" % np.mean(interbeep_delays)
