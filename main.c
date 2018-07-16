@@ -3,7 +3,6 @@
 #include <avr/io.h>
 #include <util/atomic.h>
 #include <util/delay.h>
-#include <stdlib.h>
 
 // PIN CONFIGURATION:
 // BUZZER - B4  (OC1B)
@@ -18,12 +17,12 @@
 //          of power.
 
 #define RANDOM_SEED 0x8F
-#define MIN_INTERBEEP_DELAY_S (30)
-#define MAX_INTERBEEP_DELAY_S (60 * 2)
+#define MIN_INTERBEEP_DELAY_S (60 * 5)
+#define MAX_INTERBEEP_DELAY_S (60 * 20)
 #define NUM_INITIAL_BEEPS_NODELAY 4  // +1 additional beep for the first regular beep
 #define NUM_INITIAL_BEEPS_DELAYED 50
 #define INITIAL_TIME_DELAY_S (30 * 24 * 60 * 60) // Approximately 1 month
-#define BEEP_DURATION_MS 20
+#define BEEP_DURATION_MS 10
 
 #define SLEEP_DURATION_S 8 // This is set by the WDT prescalar in enableWDTInterrupt()
 #define MIN_SLEEPS_BETWEEN_BEEPS (MIN_INTERBEEP_DELAY_S / SLEEP_DURATION_S)
@@ -181,4 +180,3 @@ int main (void) {
 
   return 1;
 }
-
