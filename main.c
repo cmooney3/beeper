@@ -1,6 +1,7 @@
+#include <avr/io.h>
 #include <avr/sleep.h>
 #include <avr/wdt.h>
-#include <avr/io.h>
+#include <stdlib.h>
 #include <util/atomic.h>
 #include <util/delay.h>
 
@@ -17,12 +18,12 @@
 //          of power.
 
 #define RANDOM_SEED 0x8F
-#define MIN_INTERBEEP_DELAY_S (60 * 5)
-#define MAX_INTERBEEP_DELAY_S (60 * 20)
+#define MIN_INTERBEEP_DELAY_S (60 * 15)  // Approximately 15 minutes
+#define MAX_INTERBEEP_DELAY_S (60 * 45)  // Approximately 45 minutes
 #define NUM_INITIAL_BEEPS_NODELAY 4  // +1 additional beep for the first regular beep
 #define NUM_INITIAL_BEEPS_DELAYED 50
-#define INITIAL_TIME_DELAY_S (30 * 24 * 60 * 60) // Approximately 1 month
-#define BEEP_DURATION_MS 10
+#define INITIAL_TIME_DELAY_S (7UL * 24UL * 60UL * 60UL) // Approximately 1 week
+#define BEEP_DURATION_MS 40
 
 #define SLEEP_DURATION_S 8 // This is set by the WDT prescalar in enableWDTInterrupt()
 #define MIN_SLEEPS_BETWEEN_BEEPS (MIN_INTERBEEP_DELAY_S / SLEEP_DURATION_S)

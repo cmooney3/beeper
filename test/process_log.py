@@ -48,3 +48,13 @@ print "min:\t%fs" % np.min(interbeep_delays)
 print "max:\t%fs" % np.max(interbeep_delays)
 print "mean:\t%fs" % np.mean(interbeep_delays)
 print "stddev:\t%fs" % np.std(interbeep_delays)
+print
+
+print "FULL LOG:"
+for i, (duration, delay) in enumerate(zip(durations, interbeep_delays)):
+  hours = delay // (60 * 60)
+  minutes = (delay - hours * (60 * 60)) // 60
+  seconds = delay - hours * (60 * 60) - minutes * 60
+  milliseconds = (seconds - int(seconds)) * 1000
+  print i + 1, "\t", "BEEP: %02dms" % duration
+  print "\t", "DELAY: %02d:%02d:%02d.%03d" % (hours, minutes, seconds, milliseconds)
