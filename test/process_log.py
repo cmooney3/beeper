@@ -58,3 +58,4 @@ for i, (duration, delay) in enumerate(zip(durations, interbeep_delays)):
   milliseconds = (seconds - int(seconds)) * 1000
   print i + 1, "\t", "BEEP: %02dms" % duration
   print "\t", "DELAY: %02d:%02d:%02d.%03d" % (hours, minutes, seconds, milliseconds)
+print len(durations), "\t", "BEEP: %02dms" % durations[-1]

@@ -71,6 +71,7 @@ def callback(indata, frames, time, error):
           print "START:\t%f\t%f\t%f" % (current_beep[START_TIMESTAMP_KEY],
                                        current_beep[START_FREQUENCY_KEY],
                                        current_beep[START_SIGNAL_STRENGTH_KEY])
+        #print freqs[main_freqi], "    ", strengths[main_freqi][timei]
       else:
         if current_beep is not None:
           current_beep[END_TIMESTAMP_KEY] = time.inputBufferAdcTime + times[timei]
