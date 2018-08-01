@@ -22,7 +22,7 @@
 #define MAX_INTERBEEP_DELAY_S (60 * 45)  // Approximately 45 minutes
 #define NUM_INITIAL_BEEPS_NODELAY 4  // +1 additional beep for the first regular beep
 #define NUM_INITIAL_BEEPS_DELAYED 50
-#define INITIAL_TIME_DELAY_S (7UL * 24UL * 60UL * 60UL) // Approximately 1 week
+#define INITIAL_TIME_DELAY_S (14UL * 24UL * 60UL * 60UL) // Approximately 2 weeks
 #define BEEP_DURATION_MS 40
 
 #define SLEEP_DURATION_S 8 // This is set by the WDT prescalar in enableWDTInterrupt()
